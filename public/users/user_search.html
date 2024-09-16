@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ค้นหาผู้ใช้ตามเลขบัตรประชาชน</title>
+</head>
+<body>
+    <h1>ค้นหาผู้ใช้ตามเลขบัตรประชาชน</h1>
+    <!-- ฟอร์มค้นหาผู้ใช้ -->
+    <form id="searchForm">
+        <label for="nationalID">เลขบัตรประชาชน:</label>
+        <input type="text" id="nationalID" name="nationalID" required>
+        <button type="submit">ค้นหา</button>
+    </form>
+
+    <div id="result"></div>
+
+    <script>
+        document.getElementById('searchForm').addEventListener('submit', async function(event) {
+            event.preventDefault(); // หยุดการรีเฟรชหน้าเว็บ
+
+            const nationalID = document.getElementById('nationalID').value;
+            const response = await fetch(`/api/user/${nationalID}`, {
+                method: 'GET'
+            });
+
+            const resultDiv = document.getElementById('result');
+            
+            if (response.ok) {
+                const userData = await response.json();
+                let formHtml = `
+                    <h2>ข้อมูลผู้ใช้</h2>
+                    <p><strong>คำนำหน้า:</strong> ${userData.User_prefix}</p>
+                    <p><strong>ชื่อ:</strong> ${userData.User_Fname}</p>
+                    <p><strong>นามสกุล:</strong> ${userData.User_Lname}</p>
+                    <p><strong>เพศ:</strong> ${userData.User_gender}</p>
+                    <p><strong>วันเกิด:</strong> ${userData.User_Date_Birth}</p>
+                    <p><strong>อายุ:</strong> ${userData.User_age}</p>
+                    <p><strong>เบอร์โทร:</strong> ${userData.User_phone_num}</p>
+                    <p><strong>อีเมล:</strong> ${userData.User_email}</p>
+                    <p><strong>สถานะ:</strong> ${userData.User_status}</p>
+                    <p><strong>ชื่อไฟล์ภาพ:</strong> ${userData.User_Image}</p>
+                    <p><strong>ชื่อไฟล์เอกสาร:</strong> ${userData.User_file}</p>
+                `;
+                if (userData.User_status === 'เอกสารไม่ครบ') {
+                    formHtml += `
+                        <h3>อัปโหลดไฟล์เอกสารใหม่:</h3>
+                        <form id="uploadForm">
+                            <input type="file" id="newFile" name="newFile" required>
+                            <br><br>
+                            <button type="submit">อัปโหลด</button>
+                        </form>
+                    `;
+                }
+
+                resultDiv.innerHTML = formHtml;
+
+                if (userData.User_status === 'เอกสารไม่ครบ') {
+                    document.getElementById('uploadForm').addEventListener('submit', async function(event) {
+                        event.preventDefault(); // หยุดการรีเฟรชหน้าเว็บ
+
+                        const formData = new FormData();
+                        const fileInput = document.getElementById('newFile');
+                        formData.append('User_Flie', fileInput.files[0]);
+
+                        try {
+                            const uploadResponse = await fetch(`/api/user/upload/${userData.User_id}`, {
+                                method: 'PUT',
+                                body: formData
+                            });
+
+                            if (uploadResponse.ok) {
+                                alert('ไฟล์ถูกอัปโหลดเรียบร้อยแล้ว!');
+                                location.reload(); // รีเฟรชหน้าเว็บเพื่อแสดงผลการเปลี่ยนแปลง
+                            } else {
+                                alert('การอัปโหลดไฟล์ล้มเหลว: ' + await uploadResponse.text());
+                            }
+                        } catch (error) {
+                            console.error('Error:', error);
+                            alert('เกิดข้อผิดพลาด: ' + error.message);
+                        }
+                    });
+                }
+            } else {
+                resultDiv.innerHTML = '<p>ไม่พบข้อมูลผู้ใช้ที่ตรงกับเลขบัตรประชาชนที่ระบุ</p>';
+            }
+        });
+    </script>
+</body>
+</html>

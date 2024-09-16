@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Page</title>
+    <link rel="stylesheet" href="/CSS/login.css">
+</head>
+<body>
+
+    <!-- Header Section -->
+    <div class="header-section">
+        <h1>โครงการ วมว. - มอ.ทักษิณ</h1>
+        <p>โครงการห้องวิทยาศาสตร์ในโรงเรียนป่าพะยอมพิทยาคม โดยการกำกับดูแลมหาลับทักษิณ</p>
+    </div>
+
+    <!-- Login Form Section -->
+    <div class="login-container">
+        <h2>สำหรับเจ้าหน้าที่</h2>
+        <form id="loginForm">
+            <label for="username">Username :</label>
+            <input type="text" id="username" placeholder="ชื่อผู้ใช้" required>
+
+            <label for="password">Password :</label>
+            <input type="password" id="password" placeholder="รหัสผ่าน" required>
+
+            <button type="submit">Login</button>
+        </form>
+    </div>
+
+    <!-- Script for login handling -->
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', async function(event) {
+            event.preventDefault();
+            
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            const response = await fetch('/api/auth/admin/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ username, password })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                alert('Login successful!');
+                localStorage.setItem('accessToken', data.accessToken);
+                localStorage.setItem('refreshToken', data.refreshToken);
+                window.location.href = '/admin/projects';
+            } else {
+                alert('Login failed! Please check your username or password.');
+            }
+        });
+    </script>
+</body>
+</html>
